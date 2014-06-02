@@ -12,18 +12,38 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
+
+import java.text.BreakIterator;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 
 public class GetAllEventListViewAdapter extends BaseExpandableListAdapter {
 
 	JSONArray dataArray;
     private Context context;
+    private String[] selectionPeople = {"1-5","5-10","10-20", "20-50", "50+"};
+    private String[] selectionTime = {"½ Hour","1 Hour","2 Hours","2-5 Hours", "5-10 Hours", "10+ Hours"};
 
 	public GetAllEventListViewAdapter(JSONArray dataArray , Context context)
 	{
 		this.dataArray = dataArray;
 		this.context = context;
 	}
+
+    public String convertTime(Long timestamp) {
+        Calendar mydate = Calendar.getInstance();
+        mydate.setTimeInMillis(timestamp*1000);
+        return mydate.get(Calendar.HOUR_OF_DAY)+":"+mydate.get(Calendar.MINUTE);
+    }
+
+    public String convertDate(Long timestamp) {
+        Calendar mydate = Calendar.getInstance();
+        mydate.setTimeInMillis(timestamp*1000);
+        return mydate.get(Calendar.DAY_OF_MONTH)+". "+ new SimpleDateFormat("MMM").format(mydate.getTime());
+    }
+
 
 
     @Override
@@ -67,13 +87,16 @@ public class GetAllEventListViewAdapter extends BaseExpandableListAdapter {
 
         if(convertView == null)
         {
-            LayoutInflater inflator = (LayoutInflater) this.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            convertView = inflator.inflate(R.layout.event_list_group, null);
+            LayoutInflater inflater = (LayoutInflater) this.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            convertView = inflater.inflate(R.layout.event_list_group, null);
 
             cell = new ListCell();
 
             cell.eventName = (TextView) convertView.findViewById(R.id.event_name);
-            cell.eventDescription = (TextView) convertView.findViewById(R.id.event_description);
+            cell.eventDistance = (TextView) convertView.findViewById(R.id.event_distance);
+            cell.eventDate = (TextView) convertView.findViewById(R.id.event_date);
+            cell.eventTime = (TextView) convertView.findViewById(R.id.event_time);
+            cell.eventImage = (ImageView) convertView.findViewById(R.id.event_image);
 
             convertView.setTag(cell);
         }
@@ -88,8 +111,32 @@ public class GetAllEventListViewAdapter extends BaseExpandableListAdapter {
             JSONObject jobject = dataArray.getJSONObject(groupPosition);
 
             cell.eventName.setText(jobject.getString("strEventName"));
-            cell.eventDescription.setText(jobject.getString("strEventDescription"));
+            cell.eventDistance.setText(jobject.getString("strEventName"));
+            cell.eventDate.setText(convertDate(jobject.getLong("intEventTime")));
+            cell.eventTime.setText(convertTime(jobject.getLong("intEventTime")));
+            cell.eventDistance.setText("300" + "m");
 
+
+            switch (jobject.getInt("intEventType")) {
+                case 0:
+                    cell.eventImage.setImageResource(R.drawable.party);
+                    break;
+
+                case 1:
+                    cell.eventImage.setImageResource(R.drawable.market);
+                    break;
+
+                case 2:
+                    cell.eventImage.setImageResource(R.drawable.show);
+                    break;
+
+                case 3:
+                    cell.eventImage.setImageResource(R.drawable.action);
+                    break;
+
+                default:
+                    break;
+            }
 
         }
 
@@ -107,14 +154,22 @@ public class GetAllEventListViewAdapter extends BaseExpandableListAdapter {
 
         if(convertView == null)
         {
-            LayoutInflater inflator = (LayoutInflater) this.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            convertView = inflator.inflate(R.layout.event_list_item, null);
+            LayoutInflater inflater = (LayoutInflater) this.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            convertView = inflater.inflate(R.layout.event_list_item, null);
 
             child = new ListChild();
 
-            child.child1 = (TextView) convertView.findViewById(R.id.child1);
-            child.child2 = (TextView) convertView.findViewById(R.id.child2);
-            child.child3 = (TextView) convertView.findViewById(R.id.child3);
+            child.eventUsername = (TextView) convertView.findViewById(R.id.event_username);
+            child.eventCreated = (TextView) convertView.findViewById(R.id.event_created);
+            child.eventDescription = (TextView) convertView.findViewById(R.id.event_description);
+            child.eventFee = (TextView) convertView.findViewById(R.id.event_fee);
+            child.feeValue = (TextView) convertView.findViewById(R.id.fee_value);
+            child.foodValue = (ImageView) convertView.findViewById(R.id.food_value);
+            child.drinksValue = (ImageView) convertView.findViewById(R.id.drinks_value);
+            child.musicValue = (ImageView) convertView.findViewById(R.id.music_value);
+            child.peopleValue = (TextView) convertView.findViewById(R.id.people_value);
+            child.eventDuration = (TextView) convertView.findViewById(R.id.event_duration);
+            child.durationValue = (TextView) convertView.findViewById(R.id.duration_value);
 
             convertView.setTag(child);
         }
@@ -127,11 +182,31 @@ public class GetAllEventListViewAdapter extends BaseExpandableListAdapter {
         try{
             JSONObject jobject = dataArray.getJSONObject(groupPosition);
 
-            child.child1.setText(jobject.getString("intEventTime"));
-            child.child2.setText(jobject.getString("intTimePosted"));
-            child.child3.setText(jobject.getString("strUsername"));
+            child.eventCreated.setText("Created: " + convertDate(jobject.getLong("intTimePosted")) + " " + convertTime(jobject.getLong("intTimePosted")));
+            child.eventUsername.setText(jobject.getString("strUsername"));
+            child.eventDescription.setText(jobject.getString("strEventDescription"));
+            child.feeValue.setText(jobject.getInt("intEventFee") + " kr.");
+            child.peopleValue.setText(selectionPeople[jobject.getInt("intPeople")]);
+            child.durationValue.setText(selectionTime[jobject.getInt("intEventDuration")]);
 
 
+            if(jobject.getBoolean("blnFood")) {
+                child.musicValue.setImageResource(R.drawable.check);
+            } else {
+                child.musicValue.setImageResource(R.drawable.delete);
+            }
+
+            if(jobject.getBoolean("blnDrinks")) {
+                child.drinksValue.setImageResource(R.drawable.check);
+            } else {
+                child.drinksValue.setImageResource(R.drawable.delete);
+            }
+
+            if(jobject.getBoolean("blnMusic")) {
+                child.foodValue.setImageResource(R.drawable.check);
+            } else {
+                child.foodValue.setImageResource(R.drawable.delete);
+            }
         }
 
         catch(JSONException e)
@@ -150,14 +225,31 @@ public class GetAllEventListViewAdapter extends BaseExpandableListAdapter {
 
     private class ListCell
 	{
-		TextView eventName;
-		TextView eventDescription;
-	}
+		public TextView eventName;
+        public ImageView eventImage;
+        public TextView eventDate;
+        public TextView eventTime;
+        public TextView eventDistance;
+    }
 
     private class ListChild {
-        TextView child1;
-        TextView child2;
-        TextView child3;
+
+        public TextView eventUsername;
+        public TextView eventCreated;
+        public TextView eventDescription;
+        public TextView eventMusic;
+        public TextView eventDrinks;
+        public TextView eventFood;
+        public TextView eventFee;
+        public TextView feeValue;
+        public TextView eventPeople;
+        public TextView peopleValue;
+        public TextView eventDuration;
+        public TextView durationValue;
+        public ImageView musicValue;
+        public ImageView foodValue;
+        public ImageView drinksValue;
+        public TextView distance;
     }
 
 }

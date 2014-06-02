@@ -1,33 +1,221 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
+    android:orientation="horizontal"
     android:background="#f1f1f1"
     android:paddingLeft="13dp"
     android:paddingBottom="5dp"
     android:paddingTop="5dp"
     android:paddingRight="30dp">
 
-    <TextView
-        android:layout_width="fill_parent"
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#555555"
+            android:text="Username"
+            android:textSize="10sp"
+            android:id="@+id/event_username"
+            android:layout_weight="1" />
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#555555"
+            android:text="Created: 13:00"
+            android:textSize="10sp"
+            android:id="@+id/event_created"
+            android:layout_weight="1"
+            android:gravity="right"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="#555555"
-        android:text="Hello 1"
-        android:id="@+id/child1"/>
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp">
 
     <TextView
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:textColor="#555555"
-        android:text="Hello 2"
-        android:id="@+id/child2"/>
+        android:text="Description"
+        android:id="@+id/event_description"/>
 
-    <TextView
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:textColor="#555555"
-        android:text="Hello 3"
-        android:id="@+id/child3"/>
+    </LinearLayout>
 
-</LinearLayout>
+    <TableRow
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_weight="1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#555555"
+                android:text="Music"
+                android:id="@+id/event_music"
+                android:layout_weight="3"
+                android:layout_gravity="left"/>
+
+            <ImageView
+                android:layout_width="0dp"
+                android:layout_height="10dp"
+                android:layout_weight="1"
+                android:gravity="right"
+                android:layout_gravity="center_vertical"
+                android:id="@+id/music_value"/>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_weight="1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#555555"
+                android:text="Drinks"
+                android:id="@+id/event_drinks"
+                android:layout_weight="3"
+                android:layout_gravity="left"/>
+
+            <ImageView
+                android:layout_width="0dp"
+                android:layout_height="10dp"
+                android:layout_weight="1"
+                android:gravity="right"
+                android:layout_gravity="center_vertical"
+                android:id="@+id/drinks_value"/>
+
+        </LinearLayout>
+
+    </TableRow>
+
+    <TableRow
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_weight="1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#555555"
+                android:text="Food"
+                android:id="@+id/event_food"
+                android:layout_weight="3"
+                android:layout_gravity="left"/>
+
+            <ImageView
+                android:layout_width="0dp"
+                android:layout_height="10dp"
+                android:layout_weight="1"
+                android:gravity="right"
+                android:layout_gravity="center_vertical"
+                android:id="@+id/food_value"/>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_weight="1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#555555"
+                android:text="Fee"
+                android:id="@+id/event_fee"
+                android:layout_weight="2"
+                android:layout_gravity="left"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                android:gravity="right"
+                android:id="@+id/fee_value"
+                android:text="55 kr." />
+
+        </LinearLayout>
+
+    </TableRow>
+
+    <TableRow
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_weight="1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#555555"
+                android:text="No. of people"
+                android:id="@+id/event_people"
+                android:layout_weight="1"
+                android:layout_gravity="left"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="right"
+                android:id="@+id/people_value"
+                android:text="55 kr."
+                android:paddingRight="10dp"/>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_weight="1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#555555"
+                android:text="Duration"
+                android:id="@+id/event_duration"
+                android:layout_weight="2"
+                android:layout_gravity="left"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                android:gravity="right"
+                android:id="@+id/duration_value"
+                android:text=" 10+ hours"/>
+
+        </LinearLayout>
+
+    </TableRow>
+
+</TableLayout>
