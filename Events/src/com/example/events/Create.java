@@ -42,7 +42,7 @@ public class Create extends Activity implements GooglePlayServicesClient.Connect
     private HashMap<String, Integer> timeMap = new HashMap<String, Integer>();
     private HashMap<String, Integer> typeMap = new HashMap<String, Integer>();
 
-    LocationClient mLocationClient;
+    LocationClient objLocationClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,8 +51,8 @@ public class Create extends Activity implements GooglePlayServicesClient.Connect
 
         setMapValues();
 
-        mLocationClient = new LocationClient(this, this, this);
-        mLocationClient.connect();
+        objLocationClient = new LocationClient(this, this, this);
+        objLocationClient.connect();
 
         DatePicker datePicker = (DatePicker) findViewById(R.id.datePicker);
         try {
@@ -128,24 +128,16 @@ public class Create extends Activity implements GooglePlayServicesClient.Connect
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.create, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
-        }
         return super.onOptionsItemSelected(item);
     }
 
     public Double[] getGpsLocation() {
-        Location currentLocation = mLocationClient.getLastLocation();
+        Location currentLocation = objLocationClient.getLastLocation();
         Double latitude = currentLocation.getLatitude();
         Double longitude = currentLocation.getLongitude();
         return new Double[] {latitude, longitude};
@@ -154,7 +146,7 @@ public class Create extends Activity implements GooglePlayServicesClient.Connect
     public void doCreateEvent(View view) {
         EditText eventName = (EditText) findViewById(R.id.eventName);
         if(eventName.getText().toString().trim().equals("")) {
-            eventName.setError( "Name is required!" );
+            eventName.setError("Name is required!");
             eventName.setHint("Please enter a name");
             return;
         }
@@ -256,10 +248,7 @@ public class Create extends Activity implements GooglePlayServicesClient.Connect
 
 
     @Override
-    public void onConnectionFailed(ConnectionResult arg0) {
-        // TODO Auto-generated method stub
-
-    }
+    public void onConnectionFailed(ConnectionResult arg0) {}
 
     @Override
     public void onConnected(Bundle arg0) {
@@ -271,18 +260,15 @@ public class Create extends Activity implements GooglePlayServicesClient.Connect
         // Google recommends 60 seconds, we have used 5 seconds for testing purposes
         request.setInterval(5000);
         request.setFastestInterval(1000);
-        mLocationClient.requestLocationUpdates(request, this);
+        objLocationClient.requestLocationUpdates(request, this);
     }
 
 
     @Override
-    public void onDisconnected() {
-    }
+    public void onDisconnected() {}
 
 
     @Override
-    public void onLocationChanged(Location location) {
-        // Valid phone location updates automatically
-    }
+    public void onLocationChanged(Location location) {}
 
 }

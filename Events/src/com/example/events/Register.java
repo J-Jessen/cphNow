@@ -44,23 +44,10 @@ public class Register extends Activity {
 
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
-    }
+    public boolean onCreateOptionsMenu(Menu menu) {return true;}
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
+    public boolean onOptionsItemSelected(MenuItem item) {return super.onOptionsItemSelected(item);}
 
     public void doRegisterUser(View view) {
         boolean blnRegistered = false;
@@ -72,8 +59,9 @@ public class Register extends Activity {
                 Toast.makeText(this, "Something went wrong! Try again.", Toast.LENGTH_SHORT).show();
             }
             else {
-				Intent mainIntent = new Intent("com.example.events.MAIN");        					
-				startActivity(mainIntent);
+                Intent mainIntent = new Intent("com.example.events.MAIN");
+                startActivity(mainIntent);
+                finish();
             }
         }
     }
@@ -98,7 +86,7 @@ public class Register extends Activity {
 
                 if(blUsernameTaken) {
                     // Username is taken!
-                	Toast.makeText(this, "Username is taken!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Username is taken!", Toast.LENGTH_SHORT).show();
                     fieldUsername.setTextColor(Color.RED);
                     blnTextColorChanged = true;
                     return false;

@@ -2,7 +2,6 @@
 <resources>
 
     <string name="app_name">Events</string>
-    <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
     <string name="title_activity_main">Main</string>
     <string name="normal">Normal</string>
@@ -16,8 +15,9 @@
     <string name="my_location">My Location</string>
     <string name="enter_your_desired_username_">Enter your desired username!</string>
     <string name="create_event">Create Event</string>
-    <string name="map_type">Map Type</string>
-    <string name="title_activity_event_details">EventDetailsActivity</string>
-    <string name="title_activity_create">Create</string>
+    <string name="map_type">Map</string>
+    <string name="title_activity_create">Create Event</string>
+    <string name="create_button_text">Create my Event!</string>
+    <string name="settings_button_text">Save and close</string>
 
 </resources>

@@ -24,8 +24,6 @@ import android.app.Dialog;
 import android.app.Fragment;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.location.Address;
-import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.SystemClock;
@@ -37,361 +35,154 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.ExpandableListView;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 
 public class Main extends FragmentActivity implements GooglePlayServicesClient.ConnectionCallbacks, GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
 
-	public JSONArray eventListResults;
-    private static final double VIBEVEJ_LAT = 55.697437, VIBEVEJ_LNG = 12.526206;
-    private static final float DEFAULTZOOM = 5;
-    private static final int GPS_ERRORDIALOG_REQUEST = 9001;
-    private int lastExpandedPosition = -1;
+    public JSONArray arrJsonEventList;
+    private static final float DEFAULT_ZOOM = 5;
+    private static final int GPS_ERROR_DIALOG_REQUEST = 9001;
 
-    public ExpandableListView getAllEventsListView;
-    public GetAllEventListViewAdapter adapter;
+    public ExpandableListView viewEventList;
+    public GetAllEventListViewAdapter adapterEventList;
+    public int intLastExpandedGroup = -1;
 
-	public static String appToken;
-    public static String username;
+    public static String strAppToken;
+    public static String strUsername;
     public static final String PREFS_NAME = "CPHnowSettings";
-	GoogleMap mMap;
+    GoogleMap objGoogleMap;
 
-    LocationClient mLocationClient;
-    public List<Marker> mapMarkers = new ArrayList<Marker>();
+    LocationClient objLocationClient;
+    public List<Marker> arrMapMarkers = new ArrayList<Marker>();
 
-    private boolean viewSettingsIsVisible = false;
+    private boolean blnSettingsVisible = false;
+    private HashMap<String, Integer> arrMarkerType = new HashMap<String, Integer>();
 
-    private View mViewSettings;
+    private View viewSettings;
 
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
-
-        SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
-        appToken = settings.getString("strAppToken", "");
-        username = settings.getString("strUsername", "");
-        eventListResults = getEventList();
         setContentView(R.layout.map);
 
-        mViewSettings = findViewById(R.id.settings);
+        // Set required variables
+        SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+        strAppToken = settings.getString("strAppToken", "");
+        strUsername = settings.getString("strUsername", "");
+        arrJsonEventList = getEventList();
+
+        viewSettings = findViewById(R.id.settings);
 
 
-        if (servicesOK()) {
-//			getAllEventsListView = (ExpandableListView) findViewById(R.id.listView1);
-//			setListAdapter();
+        if (checkGoogleServices() && initiateGoogleMap()) {
+            objGoogleMap.setMyLocationEnabled(true);
+            objLocationClient = new LocationClient(this, this, this);
+            objLocationClient.connect();
 
-			if (initMap()) {
-				Toast.makeText(this, "ready to map", Toast.LENGTH_SHORT).show();
-                gotoLocation(VIBEVEJ_LAT, VIBEVEJ_LNG, DEFAULTZOOM);
-				mMap.setMyLocationEnabled(true);
-                mLocationClient = new LocationClient(this, this, this);
-                mLocationClient.connect();
-                    try {
-                        for (int key = 0; key < eventListResults.length(); key+=1) {
-                            JSONObject eventData = eventListResults.getJSONObject(key);
-                            mapMarkers.add(setMarker(eventData.getString("strEventName"),"", eventData.getDouble("dblLatitude"), eventData.getDouble("dblLongitude")));
-                        }
-                        if (savedInstanceState == null) {
-                            getFragmentManager().beginTransaction()
-                                    .add(R.id.container, new PlaceholderFragment()).commit();
-                        }
-//                        getAllEventsListView = (ExpandableListView)findViewById(R.id.expListView);
-//
-//                        getAllEventsListView.setOnGroupExpandListener(new ExpandableListView.OnGroupExpandListener() {
-//                            @Override
-//                            public void onGroupExpand(int groupPosition) {
-//                                if (lastExpandedPosition != -1 && groupPosition != lastExpandedPosition) {
-//                                    getAllEventsListView.collapseGroup(lastExpandedPosition);
-//                                    mapMarkers.get(lastExpandedPosition).setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE));
-//                                }
-//                                lastExpandedPosition = groupPosition;
-//                                mapMarkers.get(groupPosition).setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
-//                                gotoLocation(mapMarkers.get(groupPosition).getPosition().latitude, mapMarkers.get(groupPosition).getPosition().longitude, 15);
-//                            }
-//                        });
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-			}
-			else {
-				Toast.makeText(this, "Map not available", Toast.LENGTH_SHORT).show();				
-			}
-			
-		}
-		else {
-			Toast.makeText(this, "Map not ready!!!", Toast.LENGTH_SHORT).show();
-			setContentView(R.layout.main);
-		}
-			
-	}
+            try {
+                for (int intKey = 0; intKey < arrJsonEventList.length(); intKey += 1) {
+                    JSONObject objJsonEventData = arrJsonEventList.getJSONObject(intKey);
+                    arrMapMarkers.add(setMarker(objJsonEventData.getString("strEventName"),"300m - 2. May 15:00"
+                            , objJsonEventData.getDouble("dblLatitude")
+                            , objJsonEventData.getDouble("dblLongitude")
+                            , objJsonEventData.getInt("intEventType"))
+                    );
+                }
+                if (savedInstanceState == null) {
+                    getFragmentManager().beginTransaction()
+                            .add(R.id.container, new PlaceholderFragment()).commit();
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        else {
+            Toast.makeText(this, "Error in Google Play Services", Toast.LENGTH_SHORT).show();
+        }
 
-	// Go to the specified location
-	public void gotoLocation(double lat, double lng, float zoom) {
-        LatLng ll = new LatLng(lat, lng);
-        CameraUpdate update = CameraUpdateFactory.newLatLngZoom(ll, zoom);
-        mMap.animateCamera(update);
-	}
+    }
 
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-        Toast.makeText(getApplication(), "SHOW MENU", Toast.LENGTH_SHORT).show();
-		// Inflate the menu; this adds items to the action bar if it is present.
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu. This adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
-//        menu.findItem(R.id.action_settings).setOnActionExpandListener(new MenuItem.OnActionExpandListener() {
-//            @Override
-//            public boolean onMenuItemActionExpand(MenuItem item) {
-//                toggleSettings(item.getActionView());
-//                return false;
-//            }
-//
-//            @Override
-//            public boolean onMenuItemActionCollapse(MenuItem item) {
-//                return false;
-//            }
-//        });
-		return true;
-	}
+        return true;
+    }
 
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		
-		switch (item.getItemId()) {
-		case R.id.mapTypeSatellite:
-			mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);		
-			break;
-			
-		case R.id.mapTypeTerrain:
-			mMap.setMapType(GoogleMap.MAP_TYPE_TERRAIN);		
-			break;
-			
-		case R.id.mapTypeNormal:
-			mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);		
-			break;
-			
-		case R.id.mapTypeHybrid:
-			mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);		
-			break;
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        switch (item.getItemId()) {
+        case R.id.mapTypeSatellite:
+            objGoogleMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
+            break;
+
+        case R.id.mapTypeTerrain:
+            objGoogleMap.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
+            break;
+
+        case R.id.mapTypeNormal:
+            objGoogleMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+            break;
+
+        case R.id.mapTypeHybrid:
+            objGoogleMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+            break;
 
         case R.id.action_create_event:
-            gotoCreateEvent(item.getActionView());
+            openCreateEvent(item.getActionView());
             break;
 
         case R.id.action_settings:
             toggleSettings(item.getActionView());
             break;
 
-		default:
-			break;
-		}
-		return super.onOptionsItemSelected(item);
-	}
+        default:
+            break;
+        }
+        return super.onOptionsItemSelected(item);
+    }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+        MapStateManager ctxStateManager = new MapStateManager(this);
+        ctxStateManager.saveMapState(objGoogleMap);
+    }
 
-	@Override
-	protected void onStop() {
-		super.onStop();
-		MapStateManager mgr = new MapStateManager(this);
-		mgr.saveMapState(mMap);
-	}
-	
-	
-	@Override
-	protected void onResume() {
-		super.onResume();
-		MapStateManager mgr = new MapStateManager(this);
-		CameraPosition position = mgr.getSavedCameraPosition();
-		
-		if (position != null) {
-			CameraUpdate update = CameraUpdateFactory.newCameraPosition(position);
-			mMap.moveCamera(update);
-			mMap.setMapType(mgr.getSavedMapType());
-		}
-	}
-	
-	
-	// Checking the device for Google Play Services
-	public boolean servicesOK() {
-		int isAvailable = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
-		
-		if (isAvailable == ConnectionResult.SUCCESS) {
-			return true;
-		}
-		else if (GooglePlayServicesUtil.isUserRecoverableError(isAvailable)) {
-			Dialog dialog = GooglePlayServicesUtil.getErrorDialog(isAvailable, this, GPS_ERRORDIALOG_REQUEST);
-			dialog.show();
-		}
-		else {
-			Toast.makeText(this, "Can't connect to the Google Play services", Toast.LENGTH_SHORT).show();
-		}
-		return false;
-	}
+    @Override
+    protected void onResume() {
+        super.onResume();
+        MapStateManager ctxStateManager = new MapStateManager(this);
+        CameraPosition objPosition = ctxStateManager.getSavedCameraPosition();
 
+        if (objPosition != null) {
+            CameraUpdate update = CameraUpdateFactory.newCameraPosition(objPosition);
+            objGoogleMap.moveCamera(update);
+            objGoogleMap.setMapType(ctxStateManager.getSavedMapType());
+        }
+    }
 
-	// Getting a reference to the map object if it does not already exist
-	private boolean initMap() {
-		if (mMap == null) {
-			SupportMapFragment mapFrag = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
-			mMap = mapFrag.getMap();
-			
-			if (mMap != null) {
-				mMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
-					
-					@Override
-					public View getInfoWindow(Marker arg0) {
-						// Leaving this empty will result in a call to the below getInfoContents method
-						return null;
-					}
-					
-					@Override
-					public View getInfoContents(Marker marker) {
-						View v = getLayoutInflater().inflate(R.layout.info_window, null);
-						TextView tvLocality = (TextView) v.findViewById(R.id.tv_locality);
-						TextView tvLat = (TextView) v.findViewById(R.id.tv_lat);
-						TextView tvLng = (TextView) v.findViewById(R.id.tv_lng);
-						TextView tvSnippet = (TextView) v.findViewById(R.id.tv_snippet);
-						
-						LatLng ll = marker.getPosition();
-						
-						tvLocality.setText(marker.getTitle());
-						tvLat.setText("Latitude: " + ll.latitude);
-						tvLng.setText("Longitude: " + ll.longitude);
-						tvSnippet.setText(marker.getSnippet());
-						
-						return v;
-					}
-				});
-			}
-		}
-		return (mMap != null);
-	}
-	
-
-	private void gotoLocation(double lat, double lng) {
-		LatLng ll = new LatLng(lat, lng);
-		CameraUpdate update = CameraUpdateFactory.newLatLng(ll);
-		mMap.moveCamera(update);
-	}
-	
-	
-	public void geoLocate(View v) throws IOException {
-		hideSoftKeyboard(v);
-		
-		//EditText et = (EditText) findViewById(R.id.editText1);
-		String location = "Copenhagen"; //et.getText().toString();
-		
-		if (location.length() == 0) {
-			Toast.makeText(this, "Please enter a location", Toast.LENGTH_SHORT).show();
-			return;
-		}
-		
-		hideSoftKeyboard(v);
-		
-		Geocoder gc = new Geocoder(this);
-		List<Address> list = gc.getFromLocationName(location, 1);
-		Address add = list.get(0);
-		String locality = add.getLocality();
-		Toast.makeText(this, locality, Toast.LENGTH_LONG).show();
-		
-		double lat = add.getLatitude();
-		double lng = add.getLongitude();
-		
-		gotoLocation(lat, lng, DEFAULTZOOM);
-		
-		setMarker(locality, add.getCountryName(), lat, lng);		
-	}
-	
-
-	private void hideSoftKeyboard(View v) {
-		InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
-		imm.hideSoftInputFromWindow(v.getWindowToken(), 0);		
-	}
-	
-	
-	protected void gotoCurrentLocation() {
-		Location currentLocation = mLocationClient.getLastLocation();
-		
-		if (currentLocation == null) {
-			Toast.makeText(this, "Current location isnt available", Toast.LENGTH_SHORT).show();
-		}
-		else {
-			LatLng ll = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
-			CameraUpdate update = CameraUpdateFactory.newLatLngZoom(ll, DEFAULTZOOM);
-			mMap.animateCamera(update);
-		}
-		
-		setMarker("Current location", "", currentLocation.getLatitude(), currentLocation.getLongitude());
-	}
-	
-
-	@Override
-	public void onConnectionFailed(ConnectionResult arg0) {
-		// TODO Auto-generated method stub
-		
-	}
-	
-	// updates current location
-	@Override
-	public void onConnected(Bundle arg0) {
-		Toast.makeText(this, "Connected to location service", Toast.LENGTH_SHORT).show();
-		
-		LocationRequest request = LocationRequest.create();
-		request.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        // Google recommends 60 seconds, we have used 5 seconds for testing purposes
-		request.setInterval(5000);
-		request.setFastestInterval(1000);
-		mLocationClient.requestLocationUpdates(request, this);
-	}
-	
-
-	@Override
-	public void onDisconnected() {	
-	}
-	
-
-	@Override
-	public void onLocationChanged(Location location) {
-		String msg = "Location: " + location.getLatitude() + " , " + location.getLongitude();
- 		//Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
-	}
-	
-	
-	private Marker setMarker(String locality, String country, double lat, double lng) {
-
-		MarkerOptions options = new MarkerOptions()
-			.title(locality)
-			.position(new LatLng(lat, lng))
-			.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE));
-		// custom marker
-			//.icon(BitmapDescriptorFactory.fromResource(R.drawable."ADD YOUR FILE NAME HERE"));
-		
-		if (country.length() > 0) {
-			options.snippet(country);
-		}
-		
-		Marker marker =  mMap.addMarker(options);
-        return marker;
-	}
-	
-	public JSONArray getEventList() {
-		String strRequestMethod = "getEventList";
+    public JSONArray getEventList() {
+        String strRequestMethod = "getEventList";
         try {
             JSONObject objJsonParams = new JSONObject();
-            objJsonParams.put("strUsername", username);
-            objJsonParams.put("strAppToken", appToken);
+            objJsonParams.put("strUsername", strUsername);
+            objJsonParams.put("strAppToken", strAppToken);
 
             String strRequestResponse = new HttpRequest().execute(strRequestMethod, objJsonParams.toString()).get();
             if(strRequestResponse.isEmpty()) {
                 throw new Exception();
             }
-
             return new JSONArray(strRequestResponse);
 
         } catch (Exception e) {
@@ -399,37 +190,165 @@ public class Main extends FragmentActivity implements GooglePlayServicesClient.C
             Toast.makeText(this, "Connection Error!", Toast.LENGTH_LONG).show();
             return new JSONArray();
         }
-	}
-	
-//	public void setListAdapter() {
-//
-//		adapter = new GetAllEventListViewAdapter(eventListResults, this);
-//		getAllEventsListView.setAdapter(adapter);
-//
-//        DisplayMetrics displaymetrics = new DisplayMetrics();
-//        getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
-//        int screenWidth = displaymetrics.widthPixels;
-//
-//        getAllEventsListView.setIndicatorBoundsRelative(screenWidth-200, screenWidth);
-//
-//	}
+    }
 
-    public void toggleSettings(View view) {
-        if (viewSettingsIsVisible) {
-            mViewSettings.setVisibility(View.GONE);
-        } else {
-            mViewSettings.setVisibility(View.VISIBLE);
+    public void updateAllEvents() {
+        arrJsonEventList = null;
+        arrJsonEventList = getEventList();
+        adapterEventList = new GetAllEventListViewAdapter(arrJsonEventList, this);
+        viewEventList.setAdapter(adapterEventList);
+        arrMapMarkers.clear();
+        objGoogleMap.clear();
+        intLastExpandedGroup = -1;
+
+        try {
+            for (int key = 0; key < arrJsonEventList.length(); key+=1) {
+                JSONObject eventData = arrJsonEventList.getJSONObject(key);
+                arrMapMarkers.add(setMarker(eventData.getString("strEventName")
+                        , "300m - 2. May 15:00"
+                        , eventData.getDouble("dblLatitude")
+                        , eventData.getDouble("dblLongitude")
+                        , eventData.getInt("intEventType")));
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Google functions - Custom and Overrides
+    private Marker setMarker(String strEventName, String strEventInfo
+            , double dblLatitude, double dblLongitude, int intEventType) {
+
+        MarkerOptions options = new MarkerOptions()
+                .title(strEventName)
+                .position(new LatLng(dblLatitude, dblLongitude))
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE));
+
+        if (strEventInfo.length() > 0) {
+            options.snippet(strEventInfo);
         }
 
-        viewSettingsIsVisible = !viewSettingsIsVisible;
+        Marker objMarker =  objGoogleMap.addMarker(options);
+        arrMarkerType.put(objMarker.getId(), intEventType);
+        return objMarker;
     }
 
-    public void gotoCreateEvent(View view) {
+    // Go to the specified location with given zoom
+    public void animateToLocation(double dblLatitude, double dblLongitude, float fltZoom) {
+        LatLng objLatLng = new LatLng(dblLatitude, dblLongitude);
+        CameraUpdate objCameraUpdate = CameraUpdateFactory.newLatLngZoom(objLatLng, fltZoom);
+        objGoogleMap.animateCamera(objCameraUpdate);
+    }
+
+    private void gotoCurrentLocation() {
+
+        Location objCurrentLocation = objLocationClient.getLastLocation();
+        if (objCurrentLocation == null) {
+            Toast.makeText(this, "Current location isn't available, turn on GPS!", Toast.LENGTH_SHORT).show();
+        }
+        else {
+            LatLng objLatLng = new LatLng(objCurrentLocation.getLatitude(), objCurrentLocation.getLongitude());
+            CameraUpdate objCameraUpdate = CameraUpdateFactory.newLatLngZoom(objLatLng, DEFAULT_ZOOM);
+            objGoogleMap.animateCamera(objCameraUpdate);
+        }
+
+    }
+
+    // Checking the device for Google Play Services
+    public boolean checkGoogleServices() {
+        int isAvailable = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
+
+        if (isAvailable == ConnectionResult.SUCCESS) {
+            return true;
+        }
+        else if (GooglePlayServicesUtil.isUserRecoverableError(isAvailable)) {
+            Dialog objDialog = GooglePlayServicesUtil.getErrorDialog(isAvailable, this, GPS_ERROR_DIALOG_REQUEST);
+            objDialog.show();
+        }
+        else {
+            Toast.makeText(this, "Can't connect to the Google Play services", Toast.LENGTH_SHORT).show();
+        }
+        return false;
+    }
+
+
+    // Getting a reference to the map object if it does not already exist
+    private boolean initiateGoogleMap() {
+        if (objGoogleMap == null) {
+            SupportMapFragment objMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+            objGoogleMap = objMapFragment.getMap();
+
+            if (objGoogleMap != null) {
+                objGoogleMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
+
+                    @Override
+                    public View getInfoWindow(Marker arg0) {
+                        // Leaving this empty will result in a call to the below getInfoContents method
+                        return null;
+                    }
+
+                    @Override
+                    public View getInfoContents(Marker marker) {
+                        View viewInfoWindow = getLayoutInflater().inflate(R.layout.info_window, null);
+                        TextView tvEventName = (TextView) viewInfoWindow.findViewById(R.id.eventInfoName);
+                        TextView tvEventInfo = (TextView) viewInfoWindow.findViewById(R.id.eventInfo);
+                        ImageView tvEventIcon = (ImageView) viewInfoWindow.findViewById(R.id.eventTypeIcon);
+
+                        int intEventType = arrMarkerType.get(marker.getId());
+//                        tvEventIcon.setImageResource(R.id.);
+                        tvEventName.setText(marker.getTitle());
+                        tvEventInfo.setText(marker.getSnippet());
+
+                        return viewInfoWindow;
+                    }
+                });
+            }
+        }
+        return (objGoogleMap != null);
+    }
+
+
+
+    // updates current location
+    @Override
+    public void onConnected(Bundle arg0) {
+        LocationRequest objLocationRequest = LocationRequest.create();
+        objLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        // Google recommends 60 seconds, we have used 5 seconds for testing purposes
+        objLocationRequest.setInterval(5000);
+        objLocationRequest.setFastestInterval(1000);
+        objLocationClient.requestLocationUpdates(objLocationRequest, this);
+        gotoCurrentLocation();
+    }
+
+
+    @Override
+    public void onLocationChanged(Location location) {}
+
+    @Override
+    public void onDisconnected() {}
+
+    @Override
+    public void onConnectionFailed(ConnectionResult arg0) {}
+
+
+    // OTHER VIEWS / ACTIVITIES
+    public void toggleSettings(View view) {
+
+        if (blnSettingsVisible) {
+            viewSettings.setVisibility(View.GONE);
+        } else {
+            viewSettings.setVisibility(View.VISIBLE);
+        }
+        blnSettingsVisible = !blnSettingsVisible;
+
+    }
+
+
+    public void openCreateEvent(View view) {
         Intent createEvent = new Intent("com.example.events.CREATE");
         startActivityForResult(createEvent, 1);
-
     }
-
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -437,39 +356,17 @@ public class Main extends FragmentActivity implements GooglePlayServicesClient.C
         if (requestCode == 1) {
             // Make sure the request was successful
             if (resultCode == RESULT_OK) {
-                Toast.makeText(this, "Event activity closed", Toast.LENGTH_SHORT).show();
+                // Event activity closed - Refresh list
                 updateAllEvents();
-                // The user picked a contact.
-                // The Intent's data Uri identifies which contact was selected.
-
-                // Do something with the contact here (bigger example below)
             }
             else {
-                Toast.makeText(this, "Event activity crashed?", Toast.LENGTH_SHORT).show();
+                // Event activity cancelled or crashed
             }
         }
     }
 
-    public void updateAllEvents() {
-        eventListResults = null;
-        eventListResults = getEventList();
-        adapter = new GetAllEventListViewAdapter(eventListResults, this);
-        getAllEventsListView.setAdapter(adapter);
-        mapMarkers.clear();
-        mMap.clear();
-        lastExpandedPosition = -1;
 
-        try {
-            for (int key = 0; key < eventListResults.length(); key+=1) {
-                JSONObject eventData = eventListResults.getJSONObject(key);
-                mapMarkers.add(setMarker(eventData.getString("strEventName"),"", eventData.getDouble("dblLatitude"), eventData.getDouble("dblLongitude")));
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
-
-        }
-    }
-
+    // Class to create a SwipeRefreshLayout combined with an ExpandableListView
     public class PlaceholderFragment extends Fragment implements SwipeRefreshLayout.OnRefreshListener {
 
         private SwipeRefreshLayout swipeRefreshLayout;
@@ -487,10 +384,10 @@ public class Main extends FragmentActivity implements GooglePlayServicesClient.C
         public void onActivityCreated(Bundle savedInstanceState) {
             super.onActivityCreated(savedInstanceState);
 
-            getAllEventsListView = new ExpandableListView(getActivity());
-            getAllEventsListView.setId(R.id.expListView);
+            viewEventList = new ExpandableListView(getActivity());
+            viewEventList.setId(R.id.expListView);
             setListAdapter();
-            swipeRefreshLayout.addView(getAllEventsListView);
+            swipeRefreshLayout.addView(viewEventList);
             swipeRefreshLayout.setColorScheme(android.R.color.holo_orange_dark,
                     android.R.color.holo_green_light,
                     android.R.color.holo_blue_dark,
@@ -500,55 +397,59 @@ public class Main extends FragmentActivity implements GooglePlayServicesClient.C
             setEventClickListeners();
         }
 
-        public void setEventClickListeners() {
-            getAllEventsListView.setOnGroupExpandListener(new ExpandableListView.OnGroupExpandListener() {
-                @Override
-                public void onGroupExpand(int groupPosition) {
-                    if (lastExpandedPosition != -1 && groupPosition != lastExpandedPosition) {
-                        getAllEventsListView.collapseGroup(lastExpandedPosition);
-                        mapMarkers.get(lastExpandedPosition).setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE));
-                    }
-                    lastExpandedPosition = groupPosition;
-                    mapMarkers.get(groupPosition).setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
-                    gotoLocation(mapMarkers.get(groupPosition).getPosition().latitude, mapMarkers.get(groupPosition).getPosition().longitude, 15);
-                }
-            });
-        }
-
-        public void setListAdapter() {
-
-            adapter = new GetAllEventListViewAdapter(eventListResults, getActivity());
-            getAllEventsListView.setAdapter(adapter);
-
-            DisplayMetrics displaymetrics = new DisplayMetrics();
-            getActivity().getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
-            int screenWidth = displaymetrics.widthPixels;
-
-            getAllEventsListView.setIndicatorBoundsRelative(screenWidth-200, screenWidth);
-
-        }
-
-
-
         @Override
         public void onRefresh() {
 
             new Thread() {
                 public void run() {
                     SystemClock.sleep(2000);
-
                     getActivity().runOnUiThread(new Runnable() {
-
                         @Override
                         public void run() {
                             updateAllEvents();
                             swipeRefreshLayout.setRefreshing(false);
                         }
                     });
-
                 };
             }.start();
         }
+
+        public void setEventClickListeners() {
+            viewEventList.setOnGroupExpandListener(new ExpandableListView.OnGroupExpandListener() {
+                @Override
+                public void onGroupExpand(int intGroupPosition) {
+                    if (intLastExpandedGroup != -1 && intGroupPosition != intLastExpandedGroup) {
+                        Marker objLastMarker = arrMapMarkers.get(intLastExpandedGroup);
+                        viewEventList.collapseGroup(intLastExpandedGroup);
+                        objLastMarker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE));
+                        if(objLastMarker.isInfoWindowShown()) {
+                            objLastMarker.hideInfoWindow();
+                        }
+                    }
+                    intLastExpandedGroup = intGroupPosition;
+                    arrMapMarkers.get(intGroupPosition).setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+                    animateToLocation(arrMapMarkers.get(intGroupPosition).getPosition().latitude
+                            , arrMapMarkers.get(intGroupPosition).getPosition().longitude, 15);
+                    arrMapMarkers.get(intGroupPosition).showInfoWindow();
+
+                }
+            });
+        }
+
+        public void setListAdapter() {
+
+            adapterEventList = new GetAllEventListViewAdapter(arrJsonEventList, getActivity());
+            viewEventList.setAdapter(adapterEventList);
+
+            DisplayMetrics objDisplayMetrics = new DisplayMetrics();
+            getActivity().getWindowManager().getDefaultDisplay().getMetrics(objDisplayMetrics);
+            int intScreenWidth = objDisplayMetrics.widthPixels;
+
+            viewEventList.setIndicatorBoundsRelative(intScreenWidth-200, intScreenWidth);
+
+        }
+
+
 
 
 
