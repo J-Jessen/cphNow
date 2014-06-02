@@ -272,6 +272,7 @@ tools:context="com.example.events.Create">
         android:textColor="#fff"
         android:id="@+id/doCreateEvent"
         android:onClick="doCreateEvent"
+        android:layout_marginBottom="40dp"
         />
 
 

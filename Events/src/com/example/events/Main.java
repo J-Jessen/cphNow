@@ -35,8 +35,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.ExpandableListView;
 import android.widget.ImageView;
+import android.widget.Spinner;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -48,7 +51,7 @@ import java.util.List;
 public class Main extends FragmentActivity implements GooglePlayServicesClient.ConnectionCallbacks, GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
 
     public JSONArray arrJsonEventList;
-    private static final float DEFAULT_ZOOM = 5;
+    private static final float DEFAULT_ZOOM = 15;
     private static final int GPS_ERROR_DIALOG_REQUEST = 9001;
 
     public ExpandableListView viewEventList;
@@ -58,6 +61,7 @@ public class Main extends FragmentActivity implements GooglePlayServicesClient.C
     public static String strAppToken;
     public static String strUsername;
     public static final String PREFS_NAME = "CPHnowSettings";
+    SharedPreferences settings;
     GoogleMap objGoogleMap;
 
     LocationClient objLocationClient;
@@ -65,6 +69,8 @@ public class Main extends FragmentActivity implements GooglePlayServicesClient.C
 
     private boolean blnSettingsVisible = false;
     private HashMap<String, Integer> arrMarkerType = new HashMap<String, Integer>();
+    private String[] selectionDistance = {"250m","500m","750m","1km", "5km", "All"};
+    private String[] selectionDays = {"1 Day","2 Days","5 Days","1 Week", "2 Week", "All"};
 
     private View viewSettings;
 
@@ -75,12 +81,13 @@ public class Main extends FragmentActivity implements GooglePlayServicesClient.C
         setContentView(R.layout.map);
 
         // Set required variables
-        SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+        settings = getSharedPreferences(PREFS_NAME, 0);
         strAppToken = settings.getString("strAppToken", "");
         strUsername = settings.getString("strUsername", "");
         arrJsonEventList = getEventList();
 
         viewSettings = findViewById(R.id.settings);
+        setPreviousSettings();
 
 
         if (checkGoogleServices() && initiateGoogleMap()) {
@@ -215,6 +222,39 @@ public class Main extends FragmentActivity implements GooglePlayServicesClient.C
         }
     }
 
+    private void setPreviousSettings() {
+        Switch switchParty = (Switch) findViewById(R.id.switchParty);
+        Switch switchMarket = (Switch) findViewById(R.id.switchMarket);
+        Switch switchShow = (Switch) findViewById(R.id.switchShow);
+        Switch switchAction = (Switch) findViewById(R.id.switchAction);
+
+        Spinner eventSettingsDistance = (Spinner) findViewById(R.id.eventSettingsDistance);
+        ArrayAdapter<String> distanceAdapter = new ArrayAdapter<String>(this,R.layout.spinner_custom, selectionDistance);
+        distanceAdapter.setDropDownViewResource(R.layout.spinner_custom_item);
+        eventSettingsDistance.setAdapter(distanceAdapter);
+
+        Spinner eventSettingsDays = (Spinner) findViewById(R.id.eventSettingsDays);
+        ArrayAdapter<String> daysAdapter = new ArrayAdapter<String>(this,R.layout.spinner_custom, selectionDays);
+        daysAdapter.setDropDownViewResource(R.layout.spinner_custom_item);
+        eventSettingsDays.setAdapter(daysAdapter);
+
+        Boolean blnShowParty = settings.getBoolean("blnShowParty", true);
+        Boolean blnShowMarket = settings.getBoolean("blnShowMarket", true);
+        Boolean blnShowShow = settings.getBoolean("blnShowShow", true);
+        Boolean blnShowAction = settings.getBoolean("blnShowAction", true);
+
+        Integer intSelectionDistance = settings.getInt("intSelectionDistance", 5);
+        Integer intSelectionDays = settings.getInt("intSelectionDays", 5);
+
+        switchParty.setChecked(blnShowParty);
+        switchMarket.setChecked(blnShowMarket);
+        switchShow.setChecked(blnShowShow);
+        switchAction.setChecked(blnShowAction);
+
+        eventSettingsDistance.setSelection(intSelectionDistance);
+        eventSettingsDays.setSelection(intSelectionDays);
+
+    }
     // Google functions - Custom and Overrides
     private Marker setMarker(String strEventName, String strEventInfo
             , double dblLatitude, double dblLongitude, int intEventType) {
@@ -249,7 +289,7 @@ public class Main extends FragmentActivity implements GooglePlayServicesClient.C
         else {
             LatLng objLatLng = new LatLng(objCurrentLocation.getLatitude(), objCurrentLocation.getLongitude());
             CameraUpdate objCameraUpdate = CameraUpdateFactory.newLatLngZoom(objLatLng, DEFAULT_ZOOM);
-            objGoogleMap.animateCamera(objCameraUpdate);
+            objGoogleMap.moveCamera(objCameraUpdate);
         }
 
     }
