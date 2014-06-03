@@ -4,18 +4,14 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.app.Activity;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
 import android.widget.BaseExpandableListAdapter;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import java.text.BreakIterator;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
@@ -35,13 +31,13 @@ public class GetAllEventListViewAdapter extends BaseExpandableListAdapter {
     public String convertTime(Long timestamp) {
         Calendar mydate = Calendar.getInstance();
         mydate.setTimeInMillis(timestamp*1000);
-        return mydate.get(Calendar.HOUR_OF_DAY)+":"+mydate.get(Calendar.MINUTE);
+        return new SimpleDateFormat("HH:mm").format(mydate.getTime());
     }
 
     public String convertDate(Long timestamp) {
         Calendar mydate = Calendar.getInstance();
         mydate.setTimeInMillis(timestamp*1000);
-        return mydate.get(Calendar.DAY_OF_MONTH)+". "+ new SimpleDateFormat("MMM").format(mydate.getTime());
+        return new SimpleDateFormat("d. MMM").format(mydate.getTime());
     }
 
 
@@ -111,10 +107,9 @@ public class GetAllEventListViewAdapter extends BaseExpandableListAdapter {
             JSONObject jobject = dataArray.getJSONObject(groupPosition);
 
             cell.eventName.setText(jobject.getString("strEventName"));
-            cell.eventDistance.setText(jobject.getString("strEventName"));
             cell.eventDate.setText(convertDate(jobject.getLong("intEventTime")));
             cell.eventTime.setText(convertTime(jobject.getLong("intEventTime")));
-            cell.eventDistance.setText("300" + "m");
+            cell.eventDistance.setText(jobject.getInt("intEventDistance") + "m");
 
 
             switch (jobject.getInt("intEventType")) {
@@ -237,19 +232,14 @@ public class GetAllEventListViewAdapter extends BaseExpandableListAdapter {
         public TextView eventUsername;
         public TextView eventCreated;
         public TextView eventDescription;
-        public TextView eventMusic;
-        public TextView eventDrinks;
-        public TextView eventFood;
         public TextView eventFee;
         public TextView feeValue;
-        public TextView eventPeople;
         public TextView peopleValue;
         public TextView eventDuration;
         public TextView durationValue;
         public ImageView musicValue;
         public ImageView foodValue;
         public ImageView drinksValue;
-        public TextView distance;
     }
 
 }

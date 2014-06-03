@@ -7,7 +7,7 @@
     android:paddingLeft="13dp"
     android:paddingBottom="5dp"
     android:paddingTop="5dp"
-    android:paddingRight="30dp">
+    android:paddingRight="17dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -17,7 +17,6 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:textColor="#555555"
-            android:text="Username"
             android:textSize="10sp"
             android:id="@+id/event_username"
             android:layout_weight="1" />
@@ -26,7 +25,6 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:textColor="#555555"
-            android:text="Created: 13:00"
             android:textSize="10sp"
             android:id="@+id/event_created"
             android:layout_weight="1"
@@ -44,7 +42,6 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:textColor="#555555"
-        android:text="Description"
         android:id="@+id/event_description"/>
 
     </LinearLayout>
@@ -97,6 +94,7 @@
                 android:layout_width="0dp"
                 android:layout_height="10dp"
                 android:layout_weight="1"
+                android:paddingLeft="10dp"
                 android:gravity="right"
                 android:layout_gravity="center_vertical"
                 android:id="@+id/drinks_value"/>
@@ -146,16 +144,16 @@
                 android:textColor="#555555"
                 android:text="Fee"
                 android:id="@+id/event_fee"
-                android:layout_weight="2"
+                android:layout_weight="1"
                 android:layout_gravity="left"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="2"
+                android:layout_weight="1"
                 android:gravity="right"
-                android:id="@+id/fee_value"
-                android:text="55 kr." />
+                android:textColor="#000000"
+                android:id="@+id/fee_value" />
 
         </LinearLayout>
 
@@ -186,7 +184,7 @@
                 android:layout_weight="1"
                 android:gravity="right"
                 android:id="@+id/people_value"
-                android:text="55 kr."
+                android:textColor="#000000"
                 android:paddingRight="10dp"/>
 
         </LinearLayout>
@@ -203,16 +201,16 @@
                 android:textColor="#555555"
                 android:text="Duration"
                 android:id="@+id/event_duration"
-                android:layout_weight="2"
+                android:layout_weight="1"
                 android:layout_gravity="left"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="2"
+                android:layout_weight="1"
                 android:gravity="right"
-                android:id="@+id/duration_value"
-                android:text=" 10+ hours"/>
+                android:textColor="#000000"
+                android:id="@+id/duration_value"/>
 
         </LinearLayout>
 

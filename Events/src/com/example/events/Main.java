@@ -35,7 +35,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.CompoundButton;
 import android.widget.ExpandableListView;
 import android.widget.ImageView;
 import android.widget.Spinner;
@@ -43,7 +45,9 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 
@@ -63,6 +67,12 @@ public class Main extends FragmentActivity implements GooglePlayServicesClient.C
     public static final String PREFS_NAME = "CPHnowSettings";
     SharedPreferences settings;
     GoogleMap objGoogleMap;
+    Boolean blnShowParty;
+    Boolean blnShowMarket;
+    Boolean blnShowShow;
+    Boolean blnShowAction;
+    Integer intSelectionDistance;
+    Integer intSelectionDays;
 
     LocationClient objLocationClient;
     public List<Marker> arrMapMarkers = new ArrayList<Marker>();
@@ -70,47 +80,42 @@ public class Main extends FragmentActivity implements GooglePlayServicesClient.C
     private boolean blnSettingsVisible = false;
     private HashMap<String, Integer> arrMarkerType = new HashMap<String, Integer>();
     private String[] selectionDistance = {"250m","500m","750m","1km", "5km", "All"};
-    private String[] selectionDays = {"1 Day","2 Days","5 Days","1 Week", "2 Week", "All"};
+    private String[] selectionDays = {"Today","2 Days","5 Days","1 Week", "2 Weeks", "All"};
 
     private View viewSettings;
+    private boolean blnSwitchListenersSet = false;
+    private boolean blnSpinnerListenersSet = false;
+    SharedPreferences.Editor editor;
+    boolean blnSavedInstance = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
+        if(savedInstanceState == null) {
+            blnSavedInstance = false;
+        }
         setContentView(R.layout.map);
 
         // Set required variables
         settings = getSharedPreferences(PREFS_NAME, 0);
+        editor = settings.edit();
         strAppToken = settings.getString("strAppToken", "");
         strUsername = settings.getString("strUsername", "");
-        arrJsonEventList = getEventList();
 
         viewSettings = findViewById(R.id.settings);
+        blnShowParty = settings.getBoolean("blnShowParty", true);
+        blnShowMarket = settings.getBoolean("blnShowMarket", true);
+        blnShowShow = settings.getBoolean("blnShowShow", true);
+        blnShowAction = settings.getBoolean("blnShowAction", true);
+        intSelectionDistance = settings.getInt("intSelectionDistance", 5);
+        intSelectionDays = settings.getInt("intSelectionDays", 5);
         setPreviousSettings();
-
 
         if (checkGoogleServices() && initiateGoogleMap()) {
             objGoogleMap.setMyLocationEnabled(true);
             objLocationClient = new LocationClient(this, this, this);
             objLocationClient.connect();
-
-            try {
-                for (int intKey = 0; intKey < arrJsonEventList.length(); intKey += 1) {
-                    JSONObject objJsonEventData = arrJsonEventList.getJSONObject(intKey);
-                    arrMapMarkers.add(setMarker(objJsonEventData.getString("strEventName"),"300m - 2. May 15:00"
-                            , objJsonEventData.getDouble("dblLatitude")
-                            , objJsonEventData.getDouble("dblLongitude")
-                            , objJsonEventData.getInt("intEventType"))
-                    );
-                }
-                if (savedInstanceState == null) {
-                    getFragmentManager().beginTransaction()
-                            .add(R.id.container, new PlaceholderFragment()).commit();
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
         }
         else {
             Toast.makeText(this, "Error in Google Play Services", Toast.LENGTH_SHORT).show();
@@ -185,6 +190,16 @@ public class Main extends FragmentActivity implements GooglePlayServicesClient.C
             JSONObject objJsonParams = new JSONObject();
             objJsonParams.put("strUsername", strUsername);
             objJsonParams.put("strAppToken", strAppToken);
+            objJsonParams.put("blnShowParty", blnShowParty);
+            objJsonParams.put("blnShowMarket", blnShowMarket);
+            objJsonParams.put("blnShowShow", blnShowShow);
+            objJsonParams.put("blnShowAction", blnShowAction);
+            objJsonParams.put("intMaxDistance", intSelectionDistance);
+            objJsonParams.put("intMaxDays", intSelectionDays);
+
+            Location objCurrentLocation = objLocationClient.getLastLocation();
+            objJsonParams.put("dblCurrentLatitude", objCurrentLocation.getLatitude());
+            objJsonParams.put("dblCurrentLongitude", objCurrentLocation.getLongitude());
 
             String strRequestResponse = new HttpRequest().execute(strRequestMethod, objJsonParams.toString()).get();
             if(strRequestResponse.isEmpty()) {
@@ -210,12 +225,16 @@ public class Main extends FragmentActivity implements GooglePlayServicesClient.C
 
         try {
             for (int key = 0; key < arrJsonEventList.length(); key+=1) {
-                JSONObject eventData = arrJsonEventList.getJSONObject(key);
-                arrMapMarkers.add(setMarker(eventData.getString("strEventName")
-                        , "300m - 2. May 15:00"
-                        , eventData.getDouble("dblLatitude")
-                        , eventData.getDouble("dblLongitude")
-                        , eventData.getInt("intEventType")));
+                JSONObject objJsonEventData = arrJsonEventList.getJSONObject(key);
+
+                String strEventName = objJsonEventData.getString("strEventName");
+                String strEventInfoBox = objJsonEventData.getInt("intEventDistance") + "m";
+                Long intTimestamp = objJsonEventData.getLong("intEventTime");
+                strEventInfoBox += " - "+ convertDate(intTimestamp) + " " + convertTime(intTimestamp);
+                arrMapMarkers.add(setMarker(strEventName, strEventInfoBox
+                        , objJsonEventData.getDouble("dblLatitude")
+                        , objJsonEventData.getDouble("dblLongitude")
+                        , objJsonEventData.getInt("intEventType")));
             }
         } catch (JSONException e) {
             e.printStackTrace();
@@ -238,14 +257,6 @@ public class Main extends FragmentActivity implements GooglePlayServicesClient.C
         daysAdapter.setDropDownViewResource(R.layout.spinner_custom_item);
         eventSettingsDays.setAdapter(daysAdapter);
 
-        Boolean blnShowParty = settings.getBoolean("blnShowParty", true);
-        Boolean blnShowMarket = settings.getBoolean("blnShowMarket", true);
-        Boolean blnShowShow = settings.getBoolean("blnShowShow", true);
-        Boolean blnShowAction = settings.getBoolean("blnShowAction", true);
-
-        Integer intSelectionDistance = settings.getInt("intSelectionDistance", 5);
-        Integer intSelectionDays = settings.getInt("intSelectionDays", 5);
-
         switchParty.setChecked(blnShowParty);
         switchMarket.setChecked(blnShowMarket);
         switchShow.setChecked(blnShowShow);
@@ -254,6 +265,102 @@ public class Main extends FragmentActivity implements GooglePlayServicesClient.C
         eventSettingsDistance.setSelection(intSelectionDistance);
         eventSettingsDays.setSelection(intSelectionDays);
 
+        setSwitchOnChangeEvents();
+        setSpinnersOnChangeEvents();
+    }
+
+    private void setSwitchOnChangeEvents() {
+        if(blnSwitchListenersSet) {
+            return;
+        }
+        Switch switchParty = (Switch) findViewById(R.id.switchParty);
+        Switch switchMarket = (Switch) findViewById(R.id.switchMarket);
+        Switch switchShow = (Switch) findViewById(R.id.switchShow);
+        Switch switchAction = (Switch) findViewById(R.id.switchAction);
+
+        switchParty.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+                editor.putBoolean("blnShowParty", isChecked);
+                blnShowParty = isChecked;
+                editor.commit();
+            }
+        });
+
+        switchMarket.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+                editor.putBoolean("blnShowMarket", isChecked);
+                blnShowMarket = isChecked;
+                editor.commit();
+            }
+        });
+
+        switchShow.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+                editor.putBoolean("blnShowShow", isChecked);
+                blnShowShow = isChecked;
+                editor.commit();
+            }
+        });
+
+        switchAction.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+                editor.putBoolean("blnShowAction", isChecked);
+                blnShowAction = isChecked;
+                editor.commit();
+            }
+        });
+        blnSwitchListenersSet = true;
+    }
+
+    private void setSpinnersOnChangeEvents() {
+        if(blnSpinnerListenersSet) {
+            return;
+        }
+
+        Spinner eventSettingsDistance = (Spinner) findViewById(R.id.eventSettingsDistance);
+        Spinner eventSettingsDays = (Spinner) findViewById(R.id.eventSettingsDays);
+
+        eventSettingsDistance.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int position, long id) {
+                editor.putInt("intSelectionDistance", position);
+                editor.commit();
+                intSelectionDistance = position;
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {}
+        });
+
+        eventSettingsDays.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int position, long id) {
+                editor.putInt("intSelectionDays", position);
+                editor.commit();
+                intSelectionDays = position;
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {}
+        });
+
+        blnSpinnerListenersSet = true;
+    }
+
+    public String convertTime(Long timestamp) {
+        Calendar mydate = Calendar.getInstance();
+        mydate.setTimeInMillis(timestamp*1000);
+        return new SimpleDateFormat("HH:mm").format(mydate.getTime());
+    }
+
+    public String convertDate(Long timestamp) {
+        Calendar mydate = Calendar.getInstance();
+        mydate.setTimeInMillis(timestamp*1000);
+        return new SimpleDateFormat("d. MMM").format(mydate.getTime());
     }
     // Google functions - Custom and Overrides
     private Marker setMarker(String strEventName, String strEventInfo
@@ -296,7 +403,7 @@ public class Main extends FragmentActivity implements GooglePlayServicesClient.C
 
     // Checking the device for Google Play Services
     public boolean checkGoogleServices() {
-        int isAvailable = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
+        int isAvailable = GooglePlayServicesUtil.isGooglePlayServicesAvailable(getApplication());
 
         if (isAvailable == ConnectionResult.SUCCESS) {
             return true;
@@ -335,7 +442,20 @@ public class Main extends FragmentActivity implements GooglePlayServicesClient.C
                         ImageView tvEventIcon = (ImageView) viewInfoWindow.findViewById(R.id.eventTypeIcon);
 
                         int intEventType = arrMarkerType.get(marker.getId());
-//                        tvEventIcon.setImageResource(R.id.);
+                        switch(intEventType) {
+                            case 0:
+                                tvEventIcon.setImageResource(R.drawable.party);
+                                break;
+                            case 1:
+                                tvEventIcon.setImageResource(R.drawable.market);
+                                break;
+                            case 2:
+                                tvEventIcon.setImageResource(R.drawable.show);
+                                break;
+                            case 3:
+                                tvEventIcon.setImageResource(R.drawable.action);
+                                break;
+                        }
                         tvEventName.setText(marker.getTitle());
                         tvEventInfo.setText(marker.getSnippet());
 
@@ -359,6 +479,28 @@ public class Main extends FragmentActivity implements GooglePlayServicesClient.C
         objLocationRequest.setFastestInterval(1000);
         objLocationClient.requestLocationUpdates(objLocationRequest, this);
         gotoCurrentLocation();
+
+        arrJsonEventList = getEventList();
+        try {
+            for (int intKey = 0; intKey < arrJsonEventList.length(); intKey += 1) {
+                JSONObject objJsonEventData = arrJsonEventList.getJSONObject(intKey);
+                String strEventName = objJsonEventData.getString("strEventName");
+                String strEventInfoBox = objJsonEventData.getInt("intEventDistance") + "m";
+                Long intTimestamp = objJsonEventData.getLong("intEventTime");
+                strEventInfoBox += " - "+ convertDate(intTimestamp) + " " + convertTime(intTimestamp);
+                arrMapMarkers.add(setMarker(strEventName, strEventInfoBox
+                                , objJsonEventData.getDouble("dblLatitude")
+                                , objJsonEventData.getDouble("dblLongitude")
+                                , objJsonEventData.getInt("intEventType"))
+                );
+            }
+            if (!blnSavedInstance) {
+                getFragmentManager().beginTransaction()
+                        .add(R.id.container, new PlaceholderFragment()).commit();
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 
 

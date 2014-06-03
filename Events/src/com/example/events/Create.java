@@ -54,6 +54,24 @@ public class Create extends Activity implements GooglePlayServicesClient.Connect
         objLocationClient = new LocationClient(this, this, this);
         objLocationClient.connect();
 
+        Calendar dateNow = Calendar.getInstance();
+        Integer intMinute = dateNow.get(Calendar.MINUTE);
+        int intHour = dateNow.get(Calendar.HOUR_OF_DAY);
+        int intDay = dateNow.get(Calendar.DAY_OF_MONTH);
+        int intMonth = dateNow.get(Calendar.MONTH);
+        int intPickerPosition = (int)Math.ceil((double)intMinute / (double)15);
+
+        if(intPickerPosition > 3) {
+            intPickerPosition = 0;
+            intHour += 1;
+            if(intHour > 23) {
+                intHour = 0;
+                dateNow.add(Calendar.DATE, 1);
+                intDay = dateNow.get(Calendar.DAY_OF_MONTH);
+                intMonth = dateNow.get(Calendar.MONTH);
+            }
+        }
+
         DatePicker datePicker = (DatePicker) findViewById(R.id.datePicker);
         try {
             Field f[] = datePicker.getClass().getDeclaredFields();
@@ -63,6 +81,19 @@ public class Create extends Activity implements GooglePlayServicesClient.Connect
                     Object yearPicker = field.get(datePicker);
                     ((View) yearPicker).setVisibility(View.GONE);
                 }
+
+                if (field.getName().equals("mMonthSpinner")) {
+                    field.setAccessible(true);
+                    NumberPicker monthPicker = (NumberPicker) field.get(datePicker);
+                    monthPicker.setValue(intMonth);
+                }
+
+                if (field.getName().equals("mDaySpinner")) {
+                    field.setAccessible(true);
+                    NumberPicker dayPicker = (NumberPicker) field.get(datePicker);
+                    dayPicker.setValue(intDay);
+                }
+
             }
         }
         catch (SecurityException e) {
@@ -87,6 +118,17 @@ public class Create extends Activity implements GooglePlayServicesClient.Connect
                     minutePicker.setMinValue(0);
                     minutePicker.setMaxValue(3);
                     minutePicker.setDisplayedValues(new String[]{"00", "15", "30", "45"});
+                    minutePicker.setValue(intPickerPosition);
+                } catch(IllegalAccessException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (field.getName().equals("mHourSpinner")) {
+                field.setAccessible(true);
+                NumberPicker hourPicker = null;
+                try {
+                    hourPicker = (NumberPicker) field.get(timePicker);
+                    hourPicker.setValue(intHour);
                 } catch(IllegalAccessException e) {
                     e.printStackTrace();
                 }
@@ -196,7 +238,7 @@ public class Create extends Activity implements GooglePlayServicesClient.Connect
             objJsonParams.put("intEventType", intEventType);
 
             Spinner eventPeople = (Spinner) findViewById(R.id.numberPeople);
-            Integer intPeople = peopleMap.get(eventPeople.getSelectedItem());
+            Integer intPeople = peopleMap.get(eventPeople.getSelectedItem().toString());
             objJsonParams.put("intPeople", intPeople);
 
             Spinner eventDuration = (Spinner) findViewById(R.id.eventDuration);
@@ -219,8 +261,6 @@ public class Create extends Activity implements GooglePlayServicesClient.Connect
 
             objJsonParams.put("dblLatitude", location[0]);
             objJsonParams.put("dblLongitude", location[1]);
-
-            Log.d("JsonParams: ", objJsonParams.toString());
 
             String strRequestResponse = new HttpRequest().execute(strRequestMethod, objJsonParams.toString()).get();
             if(strRequestResponse.isEmpty()) {

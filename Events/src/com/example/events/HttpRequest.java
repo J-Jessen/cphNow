@@ -29,8 +29,10 @@ class HttpRequest extends AsyncTask<String, String, String> {
 
         boolean blnRequestSuccess = false;
         String strResponse = "";
-        String strRequestConnector = "";
-
+        String strRequestConnector = "http://www.msk-webdesign.dk/cphnow/connectors/handleRequest.php";
+        if(strRequestConnector.isEmpty()) {
+            return strResponse;
+        }
         try {
             JSONParser jsonParser = new JSONParser();
             List<NameValuePair> arrRequestParams = new ArrayList<NameValuePair>();
