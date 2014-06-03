@@ -29,7 +29,7 @@ class HttpRequest extends AsyncTask<String, String, String> {
 
         boolean blnRequestSuccess = false;
         String strResponse = "";
-        String strRequestConnector = "http://www.msk-webdesign.dk/cphnow/connectors/handleRequest.php";
+        String strRequestConnector = "";
         if(strRequestConnector.isEmpty()) {
             return strResponse;
         }
