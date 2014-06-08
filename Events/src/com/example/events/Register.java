@@ -25,6 +25,7 @@ public class Register extends Activity {
     private boolean blnTextColorChanged = false;
     private String strChosenUsername = "";
 
+    // Function called when activity is created
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -42,13 +43,15 @@ public class Register extends Activity {
         });
     }
 
-
+    // Creates the menu (inflates the menu)
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {return true;}
 
+    // Listens for clicks in the menu
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {return super.onOptionsItemSelected(item);}
 
+    // Combines duplicate username check and user registration
     public void doRegisterUser(View view) {
         boolean blnRegistered = false;
         strChosenUsername = "";
@@ -66,6 +69,7 @@ public class Register extends Activity {
         }
     }
 
+    // Checks for duplicate usernames in DB
     private boolean checkUsername() {
 
         String strRequestMethod = "checkExistingUsername";
@@ -109,6 +113,7 @@ public class Register extends Activity {
         }
     }
 
+    // Creates the new user and saves app-token to local storage
     private boolean registerNewUser() {
         String strRequestMethod = "registerNewUser";
         try {
@@ -142,6 +147,4 @@ public class Register extends Activity {
             return false;
         }
     }
-
-
 }

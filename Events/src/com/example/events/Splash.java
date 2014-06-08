@@ -9,6 +9,7 @@ public class Splash extends Activity {
     private boolean blnShowSplash;
     public static final String PREFS_NAME = "CPHnowSettings";
 
+    // Function called when activity is created
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,6 +56,7 @@ public class Splash extends Activity {
         }
     }
 
+    // Runs when the activity is destroyed
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -64,6 +66,7 @@ public class Splash extends Activity {
         editor.commit();
     }
 
+    // Runs when the activity is suspended in memory
     @Override
     protected void onPause() {
         super.onPause();

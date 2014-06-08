@@ -22,61 +22,70 @@ public class GetAllEventListViewAdapter extends BaseExpandableListAdapter {
     private String[] selectionPeople = {"1-5","5-10","10-20", "20-50", "50+"};
     private String[] selectionTime = {"½ Hour","1 Hour","2 Hours","2-5 Hours", "5-10 Hours", "10+ Hours"};
 
+    // Constructor, sets the data to be used in the list
 	public GetAllEventListViewAdapter(JSONArray dataArray , Context context)
 	{
 		this.dataArray = dataArray;
 		this.context = context;
 	}
 
+    // Changes time from unix to readable string
     public String convertTime(Long timestamp) {
         Calendar mydate = Calendar.getInstance();
         mydate.setTimeInMillis(timestamp*1000);
         return new SimpleDateFormat("HH:mm").format(mydate.getTime());
     }
 
+    // Changes date from unix to readable string
     public String convertDate(Long timestamp) {
         Calendar mydate = Calendar.getInstance();
         mydate.setTimeInMillis(timestamp*1000);
         return new SimpleDateFormat("d. MMM").format(mydate.getTime());
     }
 
-
-
+    // Default override for list adapter
     @Override
     public int getGroupCount() {
         return dataArray.length();
     }
 
+    // Default override for list adapter
     @Override
     public int getChildrenCount(int groupPosition) {
         return 1;
     }
 
+    // Default override for list adapter
     @Override
     public Object getGroup(int groupPosition) {
         return groupPosition;
     }
 
+    // Default override for list adapter
     @Override
     public Object getChild(int groupPosition, int childPosition) {
         return childPosition;
     }
 
+    // Default override for list adapter
     @Override
     public long getGroupId(int groupPosition) {
         return groupPosition;
     }
 
+    // Default override for list adapter
     @Override
     public long getChildId(int groupPosition, int childPosition) {
         return childPosition;
     }
 
+    // Default override for list adapter
     @Override
     public boolean hasStableIds() {
         return false;
     }
 
+    // Sets the top level elements in the listview and populate with data from the JSONarray
     @Override
     public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
         ListCell cell;
@@ -143,6 +152,7 @@ public class GetAllEventListViewAdapter extends BaseExpandableListAdapter {
         return convertView;
     }
 
+    // Sets the child level elements in the listview and populate with data from the JSONarray
     @Override
     public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
         ListChild child;
@@ -212,12 +222,13 @@ public class GetAllEventListViewAdapter extends BaseExpandableListAdapter {
         return convertView;
     }
 
+    // Default override for list adapter
     @Override
     public boolean isChildSelectable(int groupPosition, int childPosition) {
         return false;
     }
 
-
+    // Object class for top level elements
     private class ListCell
 	{
 		public TextView eventName;
@@ -227,6 +238,7 @@ public class GetAllEventListViewAdapter extends BaseExpandableListAdapter {
         public TextView eventDistance;
     }
 
+    // Object class for child level elements
     private class ListChild {
 
         public TextView eventUsername;

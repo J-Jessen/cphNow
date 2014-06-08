@@ -31,7 +31,9 @@ import java.util.GregorianCalendar;
 import java.util.HashMap;
 
 
-public class Create extends Activity implements GooglePlayServicesClient.ConnectionCallbacks, GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
+public class Create extends Activity implements GooglePlayServicesClient.ConnectionCallbacks,
+                            GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
+
     public static final String PREFS_NAME = "CPHnowSettings";
 
     private String[] selectionPeople = {"1-5","5-10","10-20", "20-50", "50+"};
@@ -44,6 +46,7 @@ public class Create extends Activity implements GooglePlayServicesClient.Connect
 
     LocationClient objLocationClient;
 
+    // Function called when activity is created
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -152,6 +155,7 @@ public class Create extends Activity implements GooglePlayServicesClient.Connect
 
     }
 
+    // Initiate HashMap key value pairs
     private void setMapValues() {
         for(Integer value = 0; value < selectionPeople.length; value += 1) {
             peopleMap.put(selectionPeople[value], value);
@@ -166,18 +170,20 @@ public class Create extends Activity implements GooglePlayServicesClient.Connect
         }
     }
 
-
+    // Creates the menu (inflates the menu)
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         return true;
     }
 
+    // Listens for clicks in the menu
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         return super.onOptionsItemSelected(item);
     }
 
+    // Current location of the device to submit when creating events
     public Double[] getGpsLocation() {
         Location currentLocation = objLocationClient.getLastLocation();
         Double latitude = currentLocation.getLatitude();
@@ -185,6 +191,7 @@ public class Create extends Activity implements GooglePlayServicesClient.Connect
         return new Double[] {latitude, longitude};
     }
 
+    // Validates and prepares data to create events
     public void doCreateEvent(View view) {
         EditText eventName = (EditText) findViewById(R.id.eventName);
         if(eventName.getText().toString().trim().equals("")) {
@@ -286,14 +293,13 @@ public class Create extends Activity implements GooglePlayServicesClient.Connect
 
     }
 
-
+    // Triggered if no connection to Google Play Services (not in use)
     @Override
     public void onConnectionFailed(ConnectionResult arg0) {}
 
+    // Runs when Google Maps connection is made
     @Override
     public void onConnected(Bundle arg0) {
-        // updates current location
-        Toast.makeText(this, "Connected to location service", Toast.LENGTH_SHORT).show();
 
         LocationRequest request = LocationRequest.create();
         request.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
@@ -303,11 +309,11 @@ public class Create extends Activity implements GooglePlayServicesClient.Connect
         objLocationClient.requestLocationUpdates(request, this);
     }
 
-
+    // Triggered if connection to Google Play Services is disconnected (not in use)
     @Override
     public void onDisconnected() {}
 
-
+    // Used if device locations changes (not in use)
     @Override
     public void onLocationChanged(Location location) {}
 

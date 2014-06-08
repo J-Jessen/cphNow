@@ -52,7 +52,8 @@ import java.util.HashMap;
 import java.util.List;
 
 
-public class Main extends FragmentActivity implements GooglePlayServicesClient.ConnectionCallbacks, GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
+public class Main extends FragmentActivity implements GooglePlayServicesClient.ConnectionCallbacks,
+        GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
 
     public JSONArray arrJsonEventList;
     private static final float DEFAULT_ZOOM = 15;
@@ -88,6 +89,7 @@ public class Main extends FragmentActivity implements GooglePlayServicesClient.C
     SharedPreferences.Editor editor;
     boolean blnSavedInstance = true;
 
+    // Function called when activity is created
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -123,6 +125,7 @@ public class Main extends FragmentActivity implements GooglePlayServicesClient.C
 
     }
 
+    // Creates the menu (inflates the menu)
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu. This adds items to the action bar if it is present.
@@ -130,6 +133,7 @@ public class Main extends FragmentActivity implements GooglePlayServicesClient.C
         return true;
     }
 
+    // Listens for clicks in the menu
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
@@ -164,6 +168,7 @@ public class Main extends FragmentActivity implements GooglePlayServicesClient.C
         return super.onOptionsItemSelected(item);
     }
 
+    // When activity is paused
     @Override
     protected void onStop() {
         super.onStop();
@@ -171,6 +176,7 @@ public class Main extends FragmentActivity implements GooglePlayServicesClient.C
         ctxStateManager.saveMapState(objGoogleMap);
     }
 
+    // When the activity is resumed
     @Override
     protected void onResume() {
         super.onResume();
@@ -184,6 +190,7 @@ public class Main extends FragmentActivity implements GooglePlayServicesClient.C
         }
     }
 
+    // Requests an updated event list from the server
     public JSONArray getEventList() {
         String strRequestMethod = "getEventList";
         try {
@@ -214,6 +221,7 @@ public class Main extends FragmentActivity implements GooglePlayServicesClient.C
         }
     }
 
+    // Updates all elements with the newest events
     public void updateAllEvents() {
         arrJsonEventList = null;
         arrJsonEventList = getEventList();
@@ -241,6 +249,7 @@ public class Main extends FragmentActivity implements GooglePlayServicesClient.C
         }
     }
 
+    // Sets the user selected settings
     private void setPreviousSettings() {
         Switch switchParty = (Switch) findViewById(R.id.switchParty);
         Switch switchMarket = (Switch) findViewById(R.id.switchMarket);
@@ -269,6 +278,7 @@ public class Main extends FragmentActivity implements GooglePlayServicesClient.C
         setSpinnersOnChangeEvents();
     }
 
+    // Listeners for switches in settings
     private void setSwitchOnChangeEvents() {
         if(blnSwitchListenersSet) {
             return;
@@ -316,6 +326,7 @@ public class Main extends FragmentActivity implements GooglePlayServicesClient.C
         blnSwitchListenersSet = true;
     }
 
+    // Listeners for spinners in settings
     private void setSpinnersOnChangeEvents() {
         if(blnSpinnerListenersSet) {
             return;
@@ -351,18 +362,23 @@ public class Main extends FragmentActivity implements GooglePlayServicesClient.C
         blnSpinnerListenersSet = true;
     }
 
+    // Changes time from unix to readable string
     public String convertTime(Long timestamp) {
         Calendar mydate = Calendar.getInstance();
         mydate.setTimeInMillis(timestamp*1000);
         return new SimpleDateFormat("HH:mm").format(mydate.getTime());
     }
 
+    // Changes date from unix to readable string
     public String convertDate(Long timestamp) {
         Calendar mydate = Calendar.getInstance();
         mydate.setTimeInMillis(timestamp*1000);
         return new SimpleDateFormat("d. MMM").format(mydate.getTime());
     }
+
     // Google functions - Custom and Overrides
+
+    // Puts a custom marker on the map
     private Marker setMarker(String strEventName, String strEventInfo
             , double dblLatitude, double dblLongitude, int intEventType) {
 
@@ -387,6 +403,7 @@ public class Main extends FragmentActivity implements GooglePlayServicesClient.C
         objGoogleMap.animateCamera(objCameraUpdate);
     }
 
+    // Go to the device's current location
     private void gotoCurrentLocation() {
 
         Location objCurrentLocation = objLocationClient.getLastLocation();
@@ -467,9 +484,7 @@ public class Main extends FragmentActivity implements GooglePlayServicesClient.C
         return (objGoogleMap != null);
     }
 
-
-
-    // updates current location
+    // Runs when Google Maps connection is made and triggers the first event update
     @Override
     public void onConnected(Bundle arg0) {
         LocationRequest objLocationRequest = LocationRequest.create();
@@ -503,18 +518,21 @@ public class Main extends FragmentActivity implements GooglePlayServicesClient.C
         }
     }
 
-
+    // Used if device locations changes (not in use)
     @Override
     public void onLocationChanged(Location location) {}
 
+    // Triggered if connection to Google Play Services is disconnected (not in use)
     @Override
     public void onDisconnected() {}
 
+    // Triggered if no connection to Google Play Services (not in use)
     @Override
     public void onConnectionFailed(ConnectionResult arg0) {}
 
-
     // OTHER VIEWS / ACTIVITIES
+
+    // Show or hide the settings view
     public void toggleSettings(View view) {
 
         if (blnSettingsVisible) {
@@ -526,12 +544,13 @@ public class Main extends FragmentActivity implements GooglePlayServicesClient.C
 
     }
 
-
+    // Starts the create event activity
     public void openCreateEvent(View view) {
         Intent createEvent = new Intent("com.example.events.CREATE");
         startActivityForResult(createEvent, 1);
     }
 
+    // Waits for response from Create event
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         // Check which request we're responding to
@@ -546,7 +565,6 @@ public class Main extends FragmentActivity implements GooglePlayServicesClient.C
             }
         }
     }
-
 
     // Class to create a SwipeRefreshLayout combined with an ExpandableListView
     public class PlaceholderFragment extends Fragment implements SwipeRefreshLayout.OnRefreshListener {
@@ -630,10 +648,5 @@ public class Main extends FragmentActivity implements GooglePlayServicesClient.C
             viewEventList.setIndicatorBoundsRelative(intScreenWidth-200, intScreenWidth);
 
         }
-
-
-
-
-
     }
 }

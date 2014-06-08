@@ -6,9 +6,7 @@ import com.google.android.gms.maps.model.LatLng;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.hardware.Camera;
 
-@SuppressWarnings("unused")
 public class MapStateManager {
 
 	private static final String LONGITUDE = "longitude";
@@ -21,11 +19,13 @@ public class MapStateManager {
 	private static final String PREFS_NAME = "mapCameraState";
 	
 	private SharedPreferences mapStatePrefs;
-	
+
+    // Constructor for the MapStateManager class
 	public MapStateManager(Context context) {
 		mapStatePrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
 	}
-	
+
+    // Saves the map type, zoom, location in local storage
 	public void saveMapState(GoogleMap map) {
 		SharedPreferences.Editor editor = mapStatePrefs.edit();
 		CameraPosition position = map.getCameraPosition();
@@ -39,8 +39,8 @@ public class MapStateManager {
 		
 		editor.commit();
 	}
-	
-	
+
+    // Gets zoom and location in local storage
 	public CameraPosition getSavedCameraPosition() {
 		double latitude = mapStatePrefs.getFloat(LATITUDE, 0);
 		if (latitude == 0) {
@@ -56,7 +56,8 @@ public class MapStateManager {
 		CameraPosition position = new CameraPosition(target, zoom, tilt, bearing);
 		return position;
 	}
-	
+
+    // Gets the saved map type local storage
 	public int getSavedMapType() {
 		return mapStatePrefs.getInt(MAPTYPE, GoogleMap.MAP_TYPE_NORMAL);
 	}

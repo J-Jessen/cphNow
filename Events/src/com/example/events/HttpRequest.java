@@ -18,21 +18,21 @@ import java.util.List;
  */
 class HttpRequest extends AsyncTask<String, String, String> {
 
+    // Allows for actions to execute before request is sent
     @Override
     protected void onPreExecute() {
         super.onPreExecute();
         Log.d("onPreExecute: ", "in onPreExecute()");
     }
 
+    // Runs the request in another thread
     @Override
     protected String doInBackground(String ... strParams) {
 
         boolean blnRequestSuccess = false;
         String strResponse = "";
         String strRequestConnector = "";
-        if(strRequestConnector.isEmpty()) {
-            return strResponse;
-        }
+
         try {
             JSONParser jsonParser = new JSONParser();
             List<NameValuePair> arrRequestParams = new ArrayList<NameValuePair>();
@@ -64,6 +64,7 @@ class HttpRequest extends AsyncTask<String, String, String> {
         return strResponse;
     }
 
+    // Allows for actions to execute after request is received
     @Override
     protected void onPostExecute(String result) {
         Log.d("onPostExecute: ", result);
